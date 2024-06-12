@@ -1,0 +1,94 @@
+/* Formatted on 04/12/2018 09:29:21 (QP5 v5.256.13226.35538) */
+  SELECT A.V_POLICY_NO,
+         G.V_NAME POLICY_HOLDER,
+         (SELECT V_CONTACT_NUMBER
+            FROM GNDT_CUSTMOBILE_CONTACTS
+           WHERE     N_CUST_REF_NO = N_PAYER_REF_NO
+                 AND V_CONTACT_NUMBER NOT LIKE '%@%'
+                 AND V_STATUS = 'A'
+                 AND ROWNUM = 1)
+            V_CONTACT_NUMBER,
+         (SELECT Q.V_CONTACT_NUMBER
+            FROM GNDT_CUSTMOBILE_CONTACTS Q
+           WHERE     A.N_PAYER_REF_NO = Q.N_CUST_REF_NO
+                 AND Q.V_CONTACT_NUMBER LIKE '%@%'
+                 AND ROWNUM = 1)
+            EMAIL,
+         (SELECT V_ADD_ONE
+            FROM GNDT_CUSTOMER_ADDRESS R
+           WHERE     R.N_CUST_REF_NO = A.N_PAYER_REF_NO
+                 AND A.N_ADD_SEQ_NO = R.N_ADD_SEQ_NO
+                 AND A.V_ADD_CODE = R.V_ADD_CODE)
+            ADDRESS_ONE,
+         (SELECT V_ADD_TWO
+            FROM GNDT_CUSTOMER_ADDRESS R
+           WHERE     R.N_CUST_REF_NO = A.N_PAYER_REF_NO
+                 AND A.N_ADD_SEQ_NO = R.N_ADD_SEQ_NO
+                 AND A.V_ADD_CODE = R.V_ADD_CODE)
+            ADDRESS_TWO,
+         D_PREM_DUE_DATE,
+         D_NEXT_OUT_DATE,
+         D_COMMENCEMENT,
+         D_POLICY_END_DATE,
+         (SELECT V_LASTUPD_INFTIM
+            FROM PSMT_NON_PAYMENT_TERMINATION L
+           WHERE A.V_POLICY_NO = L.V_POLICY_NO AND ROWNUM = 1)
+            SYSTEM_LAPSE_DATE,
+         N_SUM_COVERED,
+         N_CONTRIBUTION,
+         (SELECT N_AMOUNT
+            FROM PPMT_OVERSHORT_PAYMENT F
+           WHERE A.V_POLICY_NO = F.V_POLICY_NO)
+            AMOUNT_IN_PD,
+         V_PYMT_FREQ,
+         V_CNTR_STAT_CODE,
+         B.V_STATUS_DESC POLICY_STATUS,
+         V_CNTR_PREM_STAT_CODE,
+         C.V_STATUS_DESC PREMIUM_STATUS,
+         E.V_AGENT_CODE,
+         JHL_UTILS.AGENT_NAME (D.N_AGENT_NO) AGENT_AGENCY,
+         (SELECT JHL_UTILS.AGENT_NAME (
+                    SUM (DECODE (N_MANAGER_LEVEL, 30, N_MANAGER_NO, 0)))
+                    USM
+            FROM AMMT_AGENT_HIERARCHY K
+           WHERE K.N_AGENT_NO = D.N_AGENT_NO AND V_STATUS = 'A')
+            UNIT_SALES_MANAGER,
+         (SELECT JHL_UTILS.AGENT_NAME (
+                    SUM (DECODE (N_MANAGER_LEVEL, 20, N_MANAGER_NO, 0)))
+                    ASM
+            FROM AMMT_AGENT_HIERARCHY K
+           WHERE K.N_AGENT_NO = D.N_AGENT_NO AND V_STATUS = 'A')
+            AGENCY_SALES_MANAGER,
+         (SELECT JHL_UTILS.AGENT_NAME (
+                    SUM (DECODE (N_MANAGER_LEVEL, 15, N_MANAGER_NO, 0)))
+                    RSM
+            FROM AMMT_AGENT_HIERARCHY K
+           WHERE K.N_AGENT_NO = D.N_AGENT_NO AND V_STATUS = 'A')
+            REGIONAL_SALES_MANAGER,
+         (SELECT JHL_UTILS.AGENT_NAME (
+                    SUM (DECODE (N_MANAGER_LEVEL, 10, N_MANAGER_NO, 0)))
+                    AS NSM
+            FROM AMMT_AGENT_HIERARCHY K
+           WHERE K.N_AGENT_NO = D.N_AGENT_NO AND V_STATUS = 'A')
+            NATIONAL_SALES_MANAGER
+    FROM GNMT_POLICY A,
+         GNMM_POLICY_STATUS_MASTER B,
+         GNMM_POLICY_STATUS_MASTER C,
+         AMMT_POL_AG_COMM D,
+         AMMM_AGENT_MASTER E,
+         GNMT_CUSTOMER_MASTER F,
+         GNMT_CUSTOMER_MASTER G
+   WHERE     A.V_POLICY_NO NOT LIKE 'GL%'
+--         AND TRUNC (D_PREM_DUE_DATE) <= NVL ( :ASAT, TRUNC (SYSDATE))
+         AND A.V_CNTR_STAT_CODE = B.V_STATUS_CODE
+         AND A.V_CNTR_PREM_STAT_CODE = C.V_STATUS_CODE
+         AND V_CNTR_STAT_CODE = 'NB022'
+         AND A.V_POLICY_NO = D.V_POLICY_NO
+         AND V_ROLE_CODE = 'SELLING'
+         AND D.V_STATUS = 'A'
+         AND D.N_AGENT_NO = E.N_AGENT_NO(+)
+         AND E.N_CUST_REF_NO = F.N_CUST_REF_NO(+)
+         AND A.N_PAYER_REF_NO = G.N_CUST_REF_NO
+         AND TO_CHAR(D_PREM_DUE_DATE, 'MON-YY') = 'JAN-23'
+        -- AND EXTRACT(YEAR FROM D_PREM_DUE_DATE)>=2023
+ORDER BY D_PREM_DUE_DATE DESC

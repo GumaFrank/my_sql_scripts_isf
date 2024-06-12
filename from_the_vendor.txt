@@ -1,0 +1,17 @@
+
+
+select * from gndt_bill_ind_dets where v_policy_no='UI201700249601' and v_rec_status<>'R' order by 4;
+select * from psmt_policy_revival where v_policy_no='UI201700249601'   order by 4;
+select * from psdt_redate_detail where v_policy_no='UI201700249601'   order by 4;
+select * from ppmt_overshort_payment where v_policy_no='UI201700249601'   order by 4;
+
+exec bpc_lapse_reversal('UI201900404856');
+ 
+UPDATE gnmt_policy  SET    v_cntr_stat_code='NB010',v_cntr_prem_stat_code='NB010' where  v_policy_no='UI201900404856';
+UPDATE gnmt_policy_DETAIL  SET    v_cntr_stat_code='NB010',v_cntr_prem_stat_code='NB010' where  v_policy_no='UI201900404856';
+update gnmt_policy_riders set  V_RIDER_STAT_CODE='NB010',V_RIDER_PREM_STAT_CODE='NB010',V_RIDER_STATUS='A' where v_policy_no ='UI201900404856';
+exec bpg_grplife_billing.bpc_raise_first_bill('UI201900404856','PB',USER,'JHLU_AMC_74',trunc(sysdate),NULL,'N','G');
+
+exec bpg_grplife_billing.put_overpayment_in_holding(USER,'JHLU_AMC_74',TRUNC(sysdate),'UI201900404856');
+
+exec bpg_grplife_billing.knock_dn_from_receipt_holding(USER,'JHLU_AMC_74',trunc(sysdate),'UI201900404856');

@@ -1,0 +1,1 @@
+select * from AMDT_AGENT_TAX_RULES   where V_LASTUPD_USER in ('NTHERESA','CTAAKA')

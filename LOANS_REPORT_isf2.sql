@@ -1,0 +1,41 @@
+/* Formatted on 18/12/2019 12:30:37 (QP5 v5.256.13226.35538) */
+SELECT COUNT(DISTINCT V_POLICY_NO) FROM 
+(
+SELECT d.V_POLICY_NO,
+       V_NAME,
+       D_CNTR_START_DATE,
+       D_CNTR_END_DATE,
+       N_CONTRIBUTION,
+       N_TERM,
+       V_PLAN_CODE,
+       d.N_SEQ_NO,
+       D_IND_DOB,
+       N_IND_SA,
+       V_SOURCE_REF_NO,
+       V_VOU_NO,
+       a.V_MAIN_VOU_NO,
+       V_VOU_SOURCE,
+       V_VOU_DESC,
+       D_LOAN_DRAWN,
+       D_VOU_DATE,
+       N_GROSS_LOAN,
+       N_VOU_AMOUNT,
+       V_CHQ_NO,
+       V_PAYEE_NAME
+  FROM PYMT_VOUCHER_ROOT a,
+       PYMT_VOU_MASTER b,
+       PSDT_LOAN_TRANSACTION c,
+       PSMT_LOAN_MASTER d,
+       GNMT_POLICY_DETAIL e
+ WHERE     a.V_MAIN_VOU_NO = b.V_MAIN_VOU_NO
+       AND c.N_LOAN_REF_NO = V_SOURCE_REF_NO
+       AND V_VOU_SOURCE IN ('PR0001')
+       AND c.N_LOAN_REF_NO = d.N_LOAN_REF_NO
+       AND d.V_POLICY_NO = e.V_POLICY_NO
+       AND d.N_SEQ_NO = e.N_SEQ_NO
+       AND c.N_GROSS_LOAN > 0
+--       AND TRUNC (C.D_LASTUPD_INFTIM) = TRUNC (A.D_VOU_DATE)
+--       AND TRUNC (D_LOAN_DRAWN) BETWEEN NVL ( :P_FM_DT, TRUNC (D_LOAN_DRAWN))
+--                                    AND NVL ( :P_TO_DT, TRUNC (D_LOAN_DRAWN))
+        AND EXTRACT(YEAR FROM D_LOAN_DRAWN) = 2023
+        )

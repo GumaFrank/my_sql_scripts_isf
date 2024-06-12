@@ -1,0 +1,72 @@
+/* Formatted on 04/02/2020 10:17:52 (QP5 v5.256.13226.35538) */
+SELECT COUNT (DISTINCT V_POLICY_NO)
+FROM 
+(
+SELECT a.V_POLICY_NO,
+       V_AGENT_CODE,
+       V_AGENT_NAME,
+       V_CURRENTLY_REPORTING_CODE,
+       V_CURRENTLY_REPORTING_NAME,
+       V_LAST_REPORTING_CODE,
+       V_LAST_REPORTING_NAME,
+       b.V_PYMT_FREQ,
+       V_PYMT_DESC,
+       N_CONTRIBUTION,
+       CASE
+          WHEN b.V_PYMT_FREQ = 0 THEN 0
+          ELSE 12 / b.V_PYMT_FREQ * b.N_CONTRIBUTION
+       END
+          API,
+       D_ISSUE_DATE,
+       D_CNTR_START_DATE,
+       D_NEXT_DUE_DATE D_NDD,
+       D_PREM_DUE_DATE D_PAID_UPTO,
+       MONTHS_BETWEEN (D_PREM_DUE_DATE, D_CNTR_START_DATE) MONTHS_PAID,
+       CASE
+          WHEN b.V_PYMT_FREQ = 0
+          THEN
+             0
+          ELSE
+               b.N_CONTRIBUTION
+             / b.V_PYMT_FREQ
+             * MONTHS_BETWEEN (D_PREM_DUE_DATE, D_CNTR_START_DATE)
+       END
+          BOOKED_PREM,
+       V_CNTR_STAT_CODE,
+       V_STATUS_DESC,
+       b.V_PMT_METHOD_CODE,
+       V_PMT_METHOD_NAME,
+       b.V_OCCUP_CODE,
+       V_OCCUP_DESC,
+       N_IND_SA,
+       V_NAME,
+       b.V_PLAN_CODE,
+       V_PLAN_NAME
+  FROM AMMT_POL_AG_COMM a,
+       GNMT_POLICY_DETAIL b,
+       GNMM_POLICY_STATUS_MASTER c,
+       GNMM_PLAN_MASTER d,
+       GNLU_FREQUENCY_MASTER f,
+       GNLU_PAY_METHOD g,
+       GNLU_OCCUP_MASTER h,
+       V_AGENT_MASTER e
+ WHERE     V_ROLE_CODE = 'SELLING'
+       AND a.V_POLICY_NO = b.V_POLICY_NO
+       AND a.V_STATUS = 'A'
+       AND b.V_CNTR_STAT_CODE = c.V_STATUS_CODE
+       AND b.V_PLAN_CODE = d.V_PLAN_CODE
+       --AND b.V_CNTR_STAT_CODE NOT IN ('NB053','NB054','NB058','NB099')
+       AND a.N_AGENT_NO = e.N_AGENT_NO(+)
+       --AND b.V_PMT_METHOD_CODE = c.V_PMT_METHOD_CODE(+)
+       --AND N_SELL_AGENT_LINK = :P_AGENT_NO
+       AND a.V_POLICY_NO NOT LIKE 'GL%'
+       AND b.N_SEQ_NO = 1
+       --AND D_ISSUE_DATE BETWEEN :P_FM_DT AND :P_TO_DT
+       --AND D_ISSUE_DATE BETWEEN ( :P_FromDate) AND ( :P_ToDate)
+       AND b.V_PYMT_FREQ = f.V_PYMT_FREQ
+       AND NVL (b.V_PMT_METHOD_CODE, 'X') = g.V_PMT_METHOD_CODE(+)
+     AND  TRUNC(D_ISSUE_DATE) BETWEEN '01-JAN-2023' AND '31-DEC-2023'
+      -- AND EXTRACT(YEAR FROM D_ISSUE_DATE)>= 2023
+       --AND b.V_OCCUP_CODE = h.V_OCCUP_CODE(+)
+       
+       )
